@@ -13,6 +13,7 @@ import websocket from './websocket.js';
 import passport from "passport";
 import cookieParser from "cookie-parser";
 import { iniciarPassport } from "./config/passport.config.js";
+import sessionsRouter from "./routes/sessionsRouter.js";
 
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/products', productRouter);
 app.use('/api/carts', cartRouter);
 app.use('/api/users', userRouter);
 app.use('/', viewsRouter);
+app.use("/api/sessions", sessionsRouter);
 
 app.get('/', (req, res) => {
     res.setHeader('content-type', 'text/html');
