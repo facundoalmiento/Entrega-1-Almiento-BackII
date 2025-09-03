@@ -1,121 +1,72 @@
-import { Router } from 'express';
-import { productDBManager } from '../dao/productDBManager.js';
-import { cartDBManager } from '../dao/cartDBManager.js';
+import { Router } from "express";
+import { requireAuth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
+import * as cartService from "../services/cart.service.js";
 
 const router = Router();
-const ProductService = new productDBManager();
-const CartService = new cartDBManager(ProductService);
 
-router.get('/:cid', async (req, res) => {
 
-    try {
-        const result = await CartService.getProductsFromCartByID(req.params.cid);
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.get("/:cid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const cart = await cartService.getCartById(req.params.cid);
+    res.json(cart);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
 });
 
-router.post('/', async (req, res) => {
-
-    try {
-        const result = await CartService.createCart();
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.post("/", requireAuth, authorizeRoles("user"), async (_req, res) => {
+  try {
+    const cart = await cartService.createCart();
+    res.status(201).json(cart);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.post('/:cid/product/:pid', async (req, res) => {
-
-    try {
-        const result = await CartService.addProductByID(req.params.cid, req.params.pid)
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.post("/:cid/product/:pid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const result = await cartService.addProductByID(req.params.cid, req.params.pid);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.delete('/:cid/product/:pid', async (req, res) => {
-
-    try {
-        const result = await CartService.deleteProductByID(req.params.cid, req.params.pid)
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.delete("/:cid/product/:pid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const result = await cartService.deleteProductByID(req.params.cid, req.params.pid);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.put('/:cid', async (req, res) => {
-
-    try {
-        const result = await CartService.updateAllProducts(req.params.cid, req.body.products)
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.put("/:cid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const result = await cartService.updateAllProducts(req.params.cid, req.body.products);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.put('/:cid/product/:pid', async (req, res) => {
-
-    try {
-        const result = await CartService.updateProductByID(req.params.cid, req.params.pid, req.body.quantity)
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.put("/:cid/product/:pid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const result = await cartService.updateProductByID(req.params.cid, req.params.pid, req.body.quantity);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.delete('/:cid', async (req, res) => {
-
-    try {
-        const result = await CartService.deleteAllProducts(req.params.cid)
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
+router.delete("/:cid", requireAuth, authorizeRoles("user"), async (req, res) => {
+  try {
+    const result = await cartService.deleteAllProducts(req.params.cid);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 export default router;

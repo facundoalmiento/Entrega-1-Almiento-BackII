@@ -12,7 +12,6 @@ const buscarToken = req => req.cookies?.cookieToken || null;
 const isValidPassword = (user, password) => bcrypt.compareSync(password, user.password);
 
 export const iniciarPassport = () => {
-  // REGISTER
   passport.use(
     "register",
     new LocalStrategy(
@@ -53,7 +52,6 @@ export const iniciarPassport = () => {
     )
   );
 
-  // LOGIN
   passport.use(
     "login",
     new LocalStrategy(
@@ -81,21 +79,18 @@ export const iniciarPassport = () => {
     )
   );
 
-  // CURRENT (JWT)
   passport.use(
     "current",
     new JWTStrategy(
       {
         jwtFromRequest: ExtractJWT.fromExtractors([
           buscarToken,
-          // si querés también permitir Authorization: Bearer <token>
           ExtractJWT.fromAuthHeaderAsBearerToken()
         ]),
         secretOrKey: process.env.SECRET || "CoderCoder123"
       },
       async (tokenPayload, done) => {
         try {
-          // tokenPayload: { id, email, role, iat, exp }
           return done(null, tokenPayload);
         } catch (error) {
           return done(error);

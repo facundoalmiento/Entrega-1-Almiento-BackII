@@ -5,7 +5,6 @@ import { usuariosModelo } from "../dao/models/usuario.model.js";
 
 const router = Router();
 
-// Crear usuario
 router.post("/", async (req, res) => {
     try {
         const { first_name, last_name, email, age, password } = req.body;
@@ -14,7 +13,6 @@ router.post("/", async (req, res) => {
             return res.status(400).json({ error: "Todos los campos son obligatorios" });
         }
 
-        // Hashear la contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await usuariosModelo.create({

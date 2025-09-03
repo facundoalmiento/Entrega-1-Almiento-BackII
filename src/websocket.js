@@ -1,28 +1,37 @@
-import { productDBManager } from './dao/productDBManager.js';
-const ProductService = new productDBManager();
+import * as productService from "./services/product.service.js";
 
-export default (io) => {
-    io.on("connection", (socket) => {
+export default function websocket(io) {
+  io.on("connection", (socket) => {
+    console.log("🟢 cliente conectado");
 
-        socket.on("createProduct", async (data) => {
-
-            try {
-                await ProductService.createProduct(data);
-                const products = await ProductService.getAllProducts({});
-                socket.emit("publishProducts", products.docs);
-            } catch (error) {
-                socket.emit("statusError", error.message);
-            }
-        });
-
-        socket.on("deleteProduct", async (data) => {
-            try {
-                const result = await ProductService.deleteProduct(data.pid);
-                const products = await ProductService.getAllProducts({});
-                socket.emit("publishProducts", products.docs);
-            } catch (error) {
-                socket.emit("statusError", error.message);
-            }
-        });
+    // crear producto
+    socket.on("createProduct", async (data) => {
+      try {
+        await productService.createProduct(data);
+        const products = await productService.getAllProducts({});
+        
+        const list = products.docs ?? products;
+       
+        io.emit("publishProducts", list);
+      } catch (error) {
+        socket.emit("statusError", error.message);
+      }
     });
+
+    // eliminar producto
+    socket.on("deleteProduct", async ({ pid }) => {
+      try {
+        await productService.deleteProduct(pid);
+        const products = await productService.getAllProducts({});
+        const list = products.docs ?? products;
+        io.emit("publishProducts", list);
+      } catch (error) {
+        socket.emit("statusError", error.message);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log("🔴 cliente desconectado");
+    });
+  });
 }

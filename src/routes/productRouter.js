@@ -1,95 +1,71 @@
-import { Router } from 'express';
-import { productDBManager } from '../dao/productDBManager.js';
-import { uploader } from '../utils/multerUtil.js';
+import { Router } from "express";
+import { requireAuth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
+import * as productService from "../services/product.service.js";
 
 const router = Router();
-const ProductService = new productDBManager();
 
-router.get('/', async (req, res) => {
-    const result = await ProductService.getAllProducts(req.query);
-
-    res.send({
-        status: 'success',
-        payload: result
-    });
+router.get("/", async (req, res) => {
+  try {
+    const data = await productService.getAllProducts(req.query);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-router.get('/:pid', async (req, res) => {
+router.get("/:pid", async (req, res) => {
+  try {
+    const prod = await productService.getProductById(req.params.pid);
+    if (!prod) return res.status(404).json({ error: "Producto no encontrado" });
+    res.json(prod);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
+router.post(
+  "/",
+  requireAuth,
+  authorizeRoles("admin"),
+  async (req, res) => {
     try {
-        const result = await ProductService.getProductByID(req.params.pid);
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
+      const created = await productService.createProduct(req.body);
+      res.status(201).json(created);
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
-});
+  }
+);
 
-router.post('/', uploader.array('thumbnails', 3), async (req, res) => {
-
-    if (req.files) {
-        req.body.thumbnails = [];
-        req.files.forEach((file) => {
-            req.body.thumbnails.push(file.path);
-        });
-    }
-
+router.put(
+  "/:pid",
+  requireAuth,
+  authorizeRoles("admin"),
+  async (req, res) => {
     try {
-        const result = await ProductService.createProduct(req.body);
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
+      const updated = await productService.updateProduct(req.params.pid, req.body);
+      if (!updated) return res.status(404).json({ error: "Producto no encontrado" });
+      res.json(updated);
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
-});
+  }
+);
 
-router.put('/:pid', uploader.array('thumbnails', 3), async (req, res) => {
-
-    if (req.files) {
-        req.body.thumbnails = [];
-        req.files.forEach((file) => {
-            req.body.thumbnails.push(file.filename);
-        });
-    }
-
+router.delete(
+  "/:pid",
+  requireAuth,
+  authorizeRoles("admin"),
+  async (req, res) => {
     try {
-        const result = await ProductService.updateProduct(req.params.pid, req.body);
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
+      const deleted = await productService.deleteProduct(req.params.pid);
+      if (!deleted) return res.status(404).json({ error: "Producto no encontrado" });
+      res.json({ message: "Producto eliminado" });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
-});
-
-router.delete('/:pid', async (req, res) => {
-
-    try {
-        const result = await ProductService.deleteProduct(req.params.pid);
-        res.send({
-            status: 'success',
-            payload: result
-        });
-    } catch (error) {
-        res.status(400).send({
-            status: 'error',
-            message: error.message
-        });
-    }
-});
+  }
+);
 
 export default router;
